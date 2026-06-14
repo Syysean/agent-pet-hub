@@ -3,7 +3,7 @@
 > Unified Desktop Pet Hub for AI Agents — A Tauri desktop app that visualizes AI Agent runtime events into animated pets on your screen.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6%2B-blue)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange)](https://www.rust-lang.org/)
+[![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange)](https://rust-lang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB)](https://react.dev/)
 [![Tauri](https://img.shields.io/badge/Tauri-2.x-22C55E)](https://tauri.app/)
 [![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
@@ -14,27 +14,27 @@ Agent Pet Hub is a cross-platform desktop pet application built on **Tauri 2.x**
 
 ## 📑 Table of Contents
 
-- [Features](#features)
-- [Architecture](#architecture)
+- [Features](#-features)
+- [Architecture](#-architecture)
   - [System Architecture](#system-architecture)
   - [Data Flow](#data-flow)
   - [Module Structure](#module-structure)
-- [Dependencies](#dependencies)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Core Components](#core-components)
+- [Dependencies](#-dependencies)
+- [Quick Start](#-quick-start)
+- [Project Structure](#-project-structure)
+- [Core Components](#-core-components)
   - [Adapter Layer](#adapter-layer)
   - [Event Bus](#event-bus)
   - [State Machine](#state-machine)
   - [Skin/Plugin System](#skinplugin-system)
   - [IPC Layer](#ipc-layer)
-- [Protocol](#protocol)
+- [Protocol](#-protocol)
   - [Event Types](#event-types)
   - [State Machine Transitions](#state-machine-transitions)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Comparison with Similar Projects](#comparison-with-similar-projects)
-- [License](#license)
+- [Configuration](#-configuration)
+- [Development](#-development)
+- [Comparison with Similar Projects](#-comparison-with-similar-projects)
+- [License](#-license)
 
 ---
 
@@ -78,516 +78,504 @@ Agent Pet Hub is a cross-platform desktop pet application built on **Tauri 2.x**
 │       │                             ┌─────────────▼──────────┐               │
 │       │                             │  PetStateMachine       │               │
 │       │                             │  (31 transition rules) │               │
-│       │                             └──────┬────────────────┘                │
-│       │                                    │ emit("pet:state_changed")       │
-│       │                             ┌──────▼──────────┐                      │
-│       │                             │  Tauri Events   │                      │
-│       │                             │  + Commands     │                      │
-│       │                             └──────┬──────────┘                      │
-│       │                                    │ emit("pet:event")               │
-│  ┌─────▼────────┐     ┌──────────────┐     ┌─────────────────────────────┐   │
-│  │  WebSocket   │     │  TTS Engine  │     │  Plugin Manager             │   │
-│  │  Server      │     │              │     │  (skin/animation/notify)    │   │
-│  │  (port 8765) │     └──────────────┘     └─────────────────────────────┘   │
-│  └──────────────┘                                                            │
+│       │                             └──────┬──────────┬──────┘               │
+│       │                                    │          │                      │
+│       │              ┌─────────────────────┘          │                      │
+│       │              ▼                                ▼                      │
+│  ┌──────────────┐  ┌────────────┐         ┌──────────────────────────┐       │
+│  │  PiJsonl     │  │  TTS       │         │  Tauri Commands (IPC)    │       │
+│  │  Watcher     │  │  Engine    │         │  (get/set state,         │       │
+│  │  (notify fs  │  │  (espeak/  │         │   settings, skin mgmt)   │       │
+│  │   monitor)   │  │   say)     │         └──────┬───────────────────┘       │
+│  └──────────────┘  └────────────┘                │                           │
+│       ┌───────────────────────────────────────────┼─────────────────────┐    │
+│       │                                           ▼                     │    │
+│       │                        ┌──────────────────────────────┐         │    │
+│       └───────────────────────▶│  WebSocket Server            │        │    │
+│                                │  (port 8765, auth + events)  │         │    │
+│                                └──────────────────────────────┘         │    │
 └──────────────────────────────────────────────────────────────────────────────┘
-        │ Tauri IPC (Events + Commands)
-        ▼
+        │                              │
+        ▼                              ▼
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│                      FRONTEND (React 19 + TypeScript)                        │
+│                         FRONTEND (React + TypeScript)                        │
 │                                                                              │
-│  ┌──────────────┐    ┌──────────────────────────────────────────────────┐    │
-│  │  App.tsx     │    │  Components                                      │    │
-│  │              │    │  ├── PetPNG.tsx  — PNG skin frame rendering      │    │
-│  │  └───┬──────┘     │  ├── PetSVG.tsx   — SVG rendering (fallback)     │    │
-│  │      │            │  ├── PetStatus.tsx — Status text overlay         │    │
-│  │      │            │  └── SkinSelector.tsx — Skin switching UI        │    │
-│  │  useAgentState  │   └──────┬─────────────────────────────────────────┘    │
-│  │  (Tauri listen) │          │                                              │
-│  └─────────────────┘    ┌─────▼────────────┐                                 │
-│                         │  useSkinLoader    │                                │
-│                         │  (Vite glob + IPC)│                                │
-│                         └───────────────────┘                                │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │  Pet Window (320x280, transparent, always-on-top, no decorations)      │  │
+│  │                                                                        │  │
+│  │  ┌──────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  PetPNG / PetSVG Component                                       │  │  │
+│  │  │  - State-driven frame switching                                  │  │  │
+│  │  │  - CSS @keyframes animations (breathing, thinking, working...)   │  │  │
+│  │  │  - Drag support (Tauri start_dragging API)                       │  │  │
+│  │  │  - Status indicator overlay (bottom center)                      │  │  │
+│  │  └──────────────────────────────────────────────────────────────────┘  │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
 │                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  WebSocketClient (optional)                                         │     │
-│  │  connect → auth → subscribe(eventTypes) → onEvent callback          │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
+│  State Management: Zustand store (PetStateSnapshot)                          │
+│  Communication: Tauri Events (listen for "pet:state_changed", "pet:event")   │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
 ```
-  ┌──────────────────────────────────────────────────────────────────┐
-  │  Path 1: Agent → Pet Animation (Primary Flow)                    │
-  └──────────────────────────────────────────────────────────────────┘
-
-  Agent (Pi/Hermes/OpenClaw)
-    │
-    │  [Pi: JSONL file]  or  [Hermes/OpenClaw: HTTP API]
-    ▼
-  AgentAdapter (Trait)
-    │  PiJsonlWatcher polls ~/.pi/agent/logs/latest.jsonl every 500ms
-    ▼
-  EventConverter
-    │  Maps raw agent events → UnifiedAgentEvent
-    │  Pi: session_start → Thinking, tool_call → Working, ...
-    ▼
-  EventBus.publish_event(unified_event)
-    │  tokio::sync::broadcast channel
-    ├──▶ PetStateMachine.handle_event()
-    │     │  lookup: (current_state, event_type) → new_state
-    │     │  debounce: min 500ms state hold time
-    │     ▼
-    │   app_handle.emit("pet:state_changed", PetState)
-    │   app_handle.emit("pet:event", UnifiedAgentEvent)
-    │
-    ▼
-  Frontend: Tauri listen("pet:state_changed")
-    │
-    ▼
-  useAgentState hook → setPetState(newState)
-    │
-    ▼
-  PetPNG component → frames[petState] → <img> + CSS animation
-    │
-    ▼
-  PetStatus → STATE_LABELS[newState] → Chinese status text
-
-  ┌──────────────────────────────────────────────────────────────────┐
-  │  Path 2: WebSocket Push (Secondary Flow)                         │
-  └──────────────────────────────────────────────────────────────────┘
-
-  WebSocketClient (connect → auth → subscribe)
-    │  ws://127.0.0.1:8765
-    ▼
-  WSServer (tokio-tungstenite)
-    │  auth → subscribe([eventTypes]) → heartbeat (30s)
-    ▼
-  event_rx.recv() → JSON.stringify → ws.send()
-    │
-    ▼
-  Frontend WebSocketClient.onEvent → callback
+1. Agent Event
+   ↓
+2. Adapter (e.g., PiAdapter reads JSONL file)
+   ↓
+3. EventConverter (normalizes to UnifiedAgentEvent)
+   ↓
+4. EventBus::publish_event() (broadcast channel)
+   ↓
+5. PetStateMachine::handle_event() → State Transition
+   ↓
+6. EventBus::publish_state_change() (broadcast channel)
+   ┌─────────────────┬─────────────────┐
+   ▼                 ▼                 ▼
+7a. Rust: TTS    7b. Rust: Tray     7c. Tauri Events
+    Engine           Icon Color           ↓
+   Speak              Update           emit("pet:state_changed")
+   Text               Update                         ↓
+                      Update               Frontend: listen() → Zustand
 ```
 
 ### Module Structure
 
 ```
 agent-pet-hub/                          # Monorepo root
-├── packages/protocol/                  # 📦 Shared protocol package
-│   └── src/
-│       ├── events.ts                   #   Type definitions (EventType, PetState, etc.)
-│       ├── schemas.ts                  #   Zod runtime validation schemas
-│       ├── validators.ts               #   Result<T,E> + validateEvent()
-│       ├── mapping.ts                  #   Agent→Event type mapping tables
-│       └── index.ts                    #   Unified re-export
+├── packages/protocol/                  # Shared event protocol (TS)
+│   ├── src/events.ts                   #   Type definitions
+│   ├── src/schemas.ts                  #   Zod schemas
+│   ├── src/validators.ts              #   Runtime validators
+│   └── src/mapping.ts                 #   Agent-specific event mappings
 │
-├── src/                                # 🌐 React Frontend
-│   ├── main.tsx                        #   Entry point (React StrictMode)
-│   ├── App.tsx                         #   Root component (skin loading + drag)
-│   ├── index.css                       #   8-state CSS animations + overlay
-│   ├── components/                     #   UI components
-│   │   ├── PetPNG.tsx                  #   PNG skin frame renderer
-│   │   ├── PetSVG.tsx                  #   SVG skin renderer (fallback)
-│   │   ├── PetSVGLegacy.tsx            #   Deprecated SVG component
-│   │   ├── PetStatus.tsx               #   Status text overlay
-│   │   └── SkinSelector.tsx            #   Skin switching UI
-│   ├── hooks/                          #   React hooks
-│   │   ├── useAgentState.ts            #   Tauri event listener → pet state
-│   │   └── useSkinLoader.ts            #   Skin discovery + frame URL resolution
-│   ├── services/                       #   Network services
-│   │   └── wsClient.ts                 #   WebSocket client (auth+subscribe+heartbeat)
-│   └── types/                          #   Frontend type definitions
-│       ├── events.ts                   #   Event type mirror (protocol-aligned)
-│       ├── pet.ts                      #   PetPosition, PetStateSnapshot, labels
-│       └── skin.ts                     #   SkinMetadata, SkinFrames, SkinInfo
-│
-├── src-tauri/                          # 🦀 Rust Backend (Tauri 2.x)
+├── src-tauri/                          # Rust backend (Tauri 2.x)
 │   ├── src/
-│   │   ├── lib.rs                      #   App initialization + module wiring
-│   │   ├── main.rs                     #   Binary entry → lib::run()
-│   │   ├── commands.rs                 #   15 Tauri commands (get/set/list)
-│   │   ├── skin.rs                     #   Skin discovery (builtin + user dirs)
-│   │   ├── adapter/                    #   Agent adapter pattern
-│   │   │   ├── trait.rs                #     AgentAdapter trait definition
-│   │   │   ├── pi_adapter.rs           #     Pi agent integration
-│   │   │   ├── pi_watcher.rs           #     JSONL file watcher (500ms poll)
-│   │   │   └── event_converter.rs      #     Raw → UnifiedAgentEvent converter
-│   │   ├── event_bus/
-│   │   │   └── bus.rs                  #   tokio broadcast channel
-│   │   ├── state_machine/
-│   │   │   ├── machine.rs              #   StateMachine + StateDebouncer (500ms)
-│   │   │   └── transitions.rs          #   31 state transition rules + tests
-│   │   ├── ipc/
-│   │   │   └── ws_server.rs            #   WebSocket server (auth+subscribe+push)
-│   │   ├── tts/                        #   Text-to-speech engine
-│   │   ├── config/                     #   SettingsManager (JSON config)
-│   │   ├── window/                     #   Pet window + system tray
-│   │   ├── plugin/                     #   Plugin manager (skin/animation/notify)
-│   │   └── types/
-│   │       └── pet.rs                  #   Rust PetState, PetConfig, PetMood
-│   ├── tauri.conf.json                 #   Window config (320x280, transparent, alwaysOnTop)
-│   └── Cargo.toml
+│   │   ├── main.rs                     #   Binary entry point
+│   │   ├── lib.rs                      #   Library entry + run()
+│   │   ├── commands.rs                #   Tauri invoke handlers
+│   │   ├── adapter/                   #   Agent adapter layer
+│   │   │   ├── mod.rs                 #     Module exports
+│   │   │   ├── trait.rs               #     AgentAdapter trait
+│   │   │   ├── pi_adapter.rs          #     Pi Agent adapter impl
+│   │   │   ├── pi_watcher.rs          #     JSONL file watcher
+│   │   │   └── event_converter.rs     #     Pi → Unified conversion
+│   │   ├── event_bus/                 #   Event bus (broadcast)
+│   │   │   ├── mod.rs                 #
+│   │   │   └── bus.rs                 #     EventBus core
+│   │   ├── state_machine/             #   State machine
+│   │   │   ├── mod.rs                 #
+│   │   │   ├── machine.rs             #     PetStateMachine
+│   │   │   └── transitions.rs         #     Transition rules (31 rules)
+│   │   ├── config/                    #   Configuration management
+│   │   │   ├── mod.rs                 #
+│   │   │   └── settings.rs            #     SettingsManager
+│   │   ├── ipc/                       #   WebSocket server
+│   │   │   ├── mod.rs                 #
+│   │   │   └── ws_server.rs           #     WSServer (tokio-tungstenite)
+│   │   ├── plugin/                    #   Plugin system
+│   │   │   ├── mod.rs                 #
+│   │   │   └── manager.rs             #     PluginManager
+│   │   ├── skin.rs                    #   Skin scanning
+│   │   ├── tts/                       #   TTS engine
+│   │   │   ├── mod.rs                 #
+│   │   │   └── engine.rs              #     TTSEngine
+│   │   ├── types/                     #   Rust type definitions
+│   │   │   ├── mod.rs                 #
+│   │   │   ├── events.rs              #     AgentSource, EventType, PetState...
+│   │   │   └── pet.rs                 #     PetSkin, PetPosition...
+│   │   └── window/                    #   Window management
+│   │       ├── mod.rs                 #
+│   │       ├── pet_window.rs          #     create_pet_window()
+│   │       └── tray.rs                #     create_tray()
+│   ├── resources/skins/               #   Built-in SVG skins
+│   ├── tauri.conf.json                #   Tauri app config
+│   ├── capabilities/                  #   Webview permissions
+│   ├── Cargo.toml                     #   Rust dependencies
+│   └── build.rs                       #   Build script
 │
-├── src/assets/skins/                   # 🎨 Built-in skins
-│   ├── default/skin.json + *.png       #   Default skin (8 frames)
-│   └── shark/skin.json + *.png         #   Shark skin (7 frames)
+├── src/                                # Frontend (React + Vite)
+│   ├── main.tsx                        #   React entry point
+│   ├── App.tsx                         #   Root component
+│   ├── index.css                       #   Global styles
+│   ├── hooks/
+│   │   ├── useAgentState.ts            #   Agent state hook (Tauri events)
+│   │   └── useSkinLoader.ts            #   Skin loading hook
+│   ├── components/
+│   │   ├── PetPNG.tsx                  #   PNG skin renderer (primary)
+│   │   ├── PetSVG.tsx                  #   SVG skin renderer (legacy)
+│   │   ├── PetSVGLegacy.tsx            #   Legacy SVG renderer
+│   │   ├── PetStatus.tsx               #   Status text overlay
+│   │   └── SkinSelector.tsx            #   Skin picker UI
+│   ├── services/
+│   │   └── wsClient.ts                 #   WebSocket client
+│   └── types/
+│       ├── pet.ts                      #   Frontend pet types
+│       ├── events.ts                   #   Frontend event types
+│       └── skin.ts                     #   Frontend skin types
 │
-├── skills/pi/                          # 🔌 Pi Agent Extension
-│   └── pet-event-logger.ts             #   Extension: logs events to JSONL
+├── src/assets/skins/                   # Built-in PNG skins
+│   └── shark/                          #   Shark skin (120x120 PNG frames)
+│       ├── skin.json                   #     Metadata
+│       ├── idle.png, thinking.png, ... #     Frame images
+│       └── backup/                     #     Backup frames
 │
-├── docs/                               # 📝 Design documents
-│   └── phase*.md
-│
-├── package.json                        #   Scripts, dependencies, workspace config
-├── tsconfig.json                       #   TypeScript config (ES2022, strict)
-├── vite.config.ts                      #   Vite config (dev port 1420)
-└── pnpm-workspace.yaml                 #   pnpm workspace (packages/*)
+├── dist/                               # Build output (frontend)
+├── tsconfig.json                       #   TypeScript config
+├── vite.config.ts                      #   Vite config
+├── package.json                        #   Node scripts
+├── pnpm-lock.yaml                      #   Lockfile
+└── README.md                           #   This file
 ```
 
 ---
 
 ## 📦 Dependencies
 
-### Runtime Dependencies
+### Runtime
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `react` | ^19.0.0 | UI framework |
-| `react-dom` | ^19.0.0 | DOM renderer |
-| `@tauri-apps/api` | ^2 | Tauri IPC (invoke/emit/listen) |
-| `@tauri-apps/plugin-shell` | ^2 | Shell command execution (TTS) |
-| `zustand` | ^5.0.0 | State management (optional) |
-| `zod` | 3.23.x | Runtime validation (protocol package) |
+| Dependency | Purpose | Minimum Version |
+|------------|---------|-----------------|
+| [Tauri 2.x](https://tauri.app/) | Desktop app framework | 2.x |
+| [Rust](https://rust-lang.org/) | Backend logic | 1.75+ |
+| [React 19](https://react.dev/) | UI framework | 19.x |
+| [TypeScript](https://www.typescriptlang.org/) | Type safety | 5.6+ |
+| [Vite](https://vitejs.dev/) | Frontend build tool | 6.x |
+| [Zustand](https://zustand.pm/) | State management | 5.x |
+| [tokio](https://tokio.rs/) | Async runtime (Rust) | 1.x |
+| [tokio-tungstenite](https://docs.rs/tokio-tungstenite/) | WebSocket server (Rust) | 0.26.x |
+| [notify](https://docs.rs/notify/) | File system monitoring | 8.x |
+| [serde](https://serde.rs/) | Serialization (Rust) | 1.x |
 
-### Development Dependencies
+### Build Tools
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `typescript` | ^5.6.0 | Type checking |
-| `vite` | ^6.0.0 | Build tool + dev server |
-| `vitest` | ^2.1.0 | Unit testing |
-| `eslint` + `@typescript-eslint/*` | ^8.0.0 | Linting |
-| `@vitejs/plugin-react` | ^4.3.0 | React Fast Refresh |
+- `pnpm` — Package manager (monorepo workspaces)
+- `cargo` — Rust build tool
+- `tsc` — TypeScript compiler
+- `esbuild` / `rollup` — Bundled by Vite
 
-### Backend Dependencies (Rust)
+### Platform-Specific (TTS)
 
-| Crate | Purpose |
-|-------|---------|
-| `tauri` | Desktop framework |
-| `tokio` | Async runtime |
-| `serde` / `serde_json` | Serialization |
-| `lazy_static` | Global state singletons |
-| `tracing` | Structured logging |
-| `lazy-regex` | JSONL line parsing |
-| `tungstenite` | WebSocket server |
-| `include_dir` | Embedded skin assets |
-| `rodio` / `cpal` | Audio playback (TTS) |
+| Platform | TTS Engine | Command |
+|----------|-----------|---------|
+| macOS | `say` (system) | `say "text"` |
+| Linux | `espeak` | `espeak "text"` |
+| Windows | Edge-TTS (HTTP API) | _Not yet implemented_ |
 
-### System Requirements
+### System Dependencies
 
-- **Node.js** 18+ / **pnpm** 8+
-- **Rust** 1.75+ with `cargo-tauri`
-- **Tauri CLI**: `cargo install tauri-cli --version "^2"`
+- **Linux**: `libwebkit2gtk-4.1`, `libssl3`, `libayatana-appindicator3` (for tray)
+- **macOS**: Xcode Command Line Tools
+- **Windows**: Visual C++ Redistributable
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Clone & Install
+### Prerequisites
+
+1. **Rust** — Install via [rustup](https://rustup.rs/):
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   source "$HOME/.cargo/env"
+   ```
+
+2. **Node.js 18+** and **pnpm**:
+   ```bash
+   # Node.js (example with nvm)
+   nvm install 20
+   nvm use 20
+
+   # pnpm
+   npm install -g pnpm
+   ```
+
+3. **System Dependencies (Linux only)**:
+   ```bash
+   # Ubuntu/Debian
+   sudo apt install libwebkit2gtk-4.1-dev \
+                    libssl-dev \
+                    libayatana-appindicator3-dev \
+                    librsvg2-dev
+
+   # Fedora
+   sudo dnf install webkit2gtk4.1-devel \
+                    openssl-devel \
+                    libayatana-appindicator-gtk3-devel \
+                    librsvg2-devel
+   ```
+
+### Installation
 
 ```bash
+# 1. Clone the repository
 git clone https://github.com/your-org/agent-pet-hub.git
 cd agent-pet-hub
+
+# 2. Install Node.js dependencies
 pnpm install
 ```
 
-### 2. Development Mode
+### Build
 
 ```bash
-# Start Tauri dev (Rust + Vite dev server on :1420)
-pnpm tauri dev
-```
-
-This starts:
-- Vite dev server on `http://localhost:1420`
-- Tauri window (320×280, transparent, always-on-top)
-- Pi adapter monitoring `~/.pi/agent/logs/latest.jsonl`
-- WebSocket server on port `8765`
-
-### 3. Build
-
-```bash
-# TypeScript check + production build
+# Build frontend only (for development)
 pnpm build
 
-# Tauri packaged binary
+# Build the full Tauri app (includes Rust compilation)
 pnpm tauri build
 ```
 
-### 4. Run Tests
+### Run
 
 ```bash
-# Rust tests (state machine transition rules)
-cd src-tauri && cargo test --lib
-```
+# Development mode (hot reload + Tauri window)
+pnpm tauri dev
 
-> Note: this workspace currently does not include frontend Vitest test files, so `pnpm test` may not find any tests.
+# This runs:
+#   1. Vite dev server on http://localhost:1420
+#   2. Rust backend (Tauri) connects to the Vite server
+#   3. Pet window opens: 320×280, transparent, always-on-top
+```
 
 ---
 
-## 🏗️ Core Components
+## 📂 Project Structure
+
+### `packages/protocol/` — Shared Event Protocol
+
+TypeScript package that defines the unified agent event protocol. Re-exported as `@agent-pet-hub/protocol`.
+
+| File | Purpose |
+|------|---------|
+| `src/events.ts` | Core type definitions: `AgentSource`, `EventType`, `PetState`, `UnifiedAgentEvent`, `WSMessage`, `TTSEvent`, etc. |
+| `src/schemas.ts` | Zod validation schemas for all types |
+| `src/validators.ts` | Runtime validators: `validateEvent()`, `tryValidateEvent()` |
+| `src/mapping.ts` | Agent-specific event mapping tables (Pi → Unified, Hermes → Unified, etc.) |
+
+### `src-tauri/` — Rust Backend
+
+| Module | Files | Purpose |
+|--------|-------|---------|
+| **Entry** | `main.rs`, `lib.rs` | Binary entry, `run()` bootstrap, global initialization |
+| **Commands** | `commands.rs` | 13 Tauri invoke handlers exposed to frontend |
+| **Adapter** | `adapter/trait.rs`, `pi_adapter.rs`, `pi_watcher.rs`, `event_converter.rs` | Agent adapter layer — `AgentAdapter` trait + Pi implementation |
+| **Event Bus** | `event_bus/bus.rs` | Broadcast-based event distribution (tokio sync channels) |
+| **State Machine** | `state_machine/machine.rs`, `transitions.rs` | `PetStateMachine` with 31 transition rules + debouncer |
+| **Config** | `config/settings.rs` | `SettingsManager` — JSON config read/write with deep merge |
+| **IPC** | `ipc/ws_server.rs` | WebSocket server for external event subscription |
+| **Plugin** | `plugin/manager.rs` | Plugin lifecycle management (load, unload, query) |
+| **Skin** | `skin.rs` | Skin scanning (built-in + user-custom), validation |
+| **TTS** | `tts/engine.rs` | Cross-platform text-to-speech engine |
+| **Window** | `window/pet_window.rs`, `tray.rs` | Pet window creation, system tray management |
+| **Types** | `types/events.rs`, `pet.rs` | Rust type definitions (mirrors `packages/protocol/src/events.ts`) |
+
+### `src/` — Frontend (React + Vite)
+
+| File | Purpose |
+|------|---------|
+| `main.tsx` | React entry — mounts `<App />` in `<StrictMode>` |
+| `App.tsx` | Root component — loads skin ID from settings, renders PetPNG + PetStatus |
+| `hooks/useAgentState.ts` | Zustand-free hook: listens to Tauri events (`pet:state_changed`, `pet:event`) |
+| `hooks/useSkinLoader.ts` | Loads skin metadata (skin.json) + PNG frame URLs from Vite glob |
+| `components/PetPNG.tsx` | PNG skin renderer — loads frame based on PetState, CSS animation overlay |
+| `components/PetSVG.tsx` | SVG skin renderer (legacy) — inline SVG with CSS animations |
+| `components/PetStatus.tsx` | Status text overlay at bottom of window |
+| `components/SkinSelector.tsx` | Skin picker — lists all skins, switches via `update_settings` IPC |
+| `services/wsClient.ts` | WebSocket client — connects to `ws://127.0.0.1:8765`, auth + subscribe + heartbeat |
+| `types/pet.ts` | Frontend pet types: `PetState`, `PetStateSnapshot`, `STATE_LABELS` |
+| `types/events.ts` | Frontend event types (local mirror of protocol) |
+| `types/skin.ts` | Frontend skin types: `SkinMetadata`, `SkinInfo`, `SkinFrames` |
+
+### `src/assets/skins/` — Built-in PNG Skins
+
+| Skin | Frames | Description |
+|------|--------|-------------|
+| `shark/` | 8 PNG files (120×120) | Cute shark character with idle, thinking, working, waiting, success, error, speaking, connecting frames |
+
+Each skin directory must contain:
+- `skin.json` — metadata (id, name, frames mapping)
+- Frame PNG files — one per PetState
+
+---
+
+## 🧱 Core Components
 
 ### Adapter Layer
 
-The Adapter pattern enables **zero-code integration** of new AI agents. Each agent implements the `AgentAdapter` trait:
+The adapter layer provides a unified interface for connecting to different AI agents.
 
+**Trait** (`src-tauri/src/adapter/trait.rs`):
 ```rust
-// src-tauri/src/adapter/trait.rs
+#[async_trait::async_trait]
 pub trait AgentAdapter: Send + Sync {
-    fn identity(&self) -> AdapterIdentity;
-    fn connect(&mut self) -> Result<(), AdapterError>;
-    fn start_listening(&mut self, event_bus: EventBusSender);
-    fn send_message(&self, message: &str) -> Result<(), AdapterError>;
-    fn health_check(&self) -> bool;
+    fn identity(&self) -> &AdapterIdentity;
+    async fn connect(&self) -> Result<(), AdapterError>;
+    async fn start_listening(&self) -> Result<(), AdapterError>;
+    async fn stop_listening(&self) -> Result<(), AdapterError>;
+    async fn send_message(&self, text: &str, session_id: &str) -> Result<String, AdapterError>;
+    async fn list_sessions(&self) -> Result<Vec<Session>, AdapterError>;
+    async fn health_check(&self) -> Result<AgentHealthStatus, AdapterError>;
+    fn get_identity_info(&self) -> AgentIdentity;
 }
 ```
 
-| Adapter | Status | Connection Method |
-|---------|--------|-------------------|
-| **Pi** | ✅ Implemented | JSONL file watcher (500ms poll) |
-| **Hermes** | 🔄 Planned | HTTP gateway polling |
-| **OpenClaw** | 🔄 Planned | HTTP API polling |
+**Current Implementation**: `PiAdapter` (`pi_adapter.rs`)
+- Connects by verifying JSONL log file path
+- Listens via `PiJsonlWatcher` (uses `notify` crate for cross-platform file monitoring)
+- Converts Pi events using `EventConverter`
+- Supports optional TTS engine integration
 
-Adding a new adapter requires:
-1. Implement `AgentAdapter` trait
-2. Register in `lib.rs` under `init_adapters()`
-3. Enable in config
+**Adding a New Adapter**: Implement the `AgentAdapter` trait and register in `lib.rs` setup.
 
 ### Event Bus
 
-The EventBus is a **tokio broadcast channel** that decouples event producers from consumers:
+`EventBus` (`src-tauri/src/event_bus/bus.rs`) uses `tokio::sync::broadcast` channels for pub/sub:
 
-```rust
-// src-tauri/src/event_bus/bus.rs
-pub struct EventBus {
-    event_tx: broadcast::Sender<UnifiedAgentEvent>,
-    state_tx: broadcast::Sender<PetState>,
-}
-```
-
-**Flow:**
-```
-AgentAdapter → EventConverter → EventBus.publish_event()
-                                              ├──▶ PetStateMachine
-                                              ├──▶ WebSocket Server
-                                              └──▶ Frontend (Tauri Events)
-```
-
-**Benefits:**
-- Zero-copy event distribution
-- Any number of subscribers (state machine, WS server, plugins)
-- Backpressure via broadcast channel capacity
+- **Event Channel** (`event_tx`): Broadcasts `UnifiedAgentEvent` to all subscribers
+- **State Channel** (`state_tx`): Broadcasts `(PetState, PetState)` tuples on state changes
+- **Channel size**: Configurable (default 4096), old events dropped when full
+- **Clone-safe**: `EventBus` is `Clone` (clones the internal senders)
 
 ### State Machine
 
-A deterministic state machine with **31 transition rules** and **500ms debounce**:
+`PetStateMachine` (`src-tauri/src/state_machine/machine.rs`) is the core decision engine:
 
-```rust
-// src-tauri/src/state_machine/machine.rs
-pub struct PetStateMachine {
-    current_state: PetState,
-    previous_state: Option<PetState>,
-    state_history: Vec<PetState>,
-    min_state_duration: Duration,   // 500ms debounce
-    callbacks: Vec<Box<dyn Fn(PetState) + Send + Sync>>,
-}
-```
-
-**8 Pet States:**
-| State | Chinese Label | CSS Class | Description |
-|-------|--------------|-----------|-------------|
-| `Idle` | 空闲 | `pet-idle` | Breathing, idle animation |
-| `Thinking` | 思考中 | `pet-thinking` | Tilted head, blinking |
-| `Working` | 工作中 | `pet-working` | Coding, busy |
-| `Waiting` | 等待中 | `pet-waiting` | Looking at watch, waiting for permission |
-| `Success` | 成功 | `pet-success` | Celebration animation |
-| `Error` | 出错 | `pet-error` | Shaking head, error indication |
-| `Speaking` | 语音播报 | `pet-speaking` | TTS playback |
-| `Connecting` | 连接中 | `pet-connecting` | Loading/connecting |
-
-**Key transition rules (31 total):**
-```
-Connecting + AdapterConnected → Idle
-Connecting + SessionStart → Thinking
-Connecting + UserPrompt → Thinking
-Idle + SessionStart → Thinking
-Idle + UserPrompt → Thinking
-Thinking + ToolCallStart → Working
-Thinking + ToolBatch → Working
-Thinking + SubagentStart → Working
-Thinking + SessionEnd → Idle
-Thinking + UserCancel → Idle
-Thinking + ToolCallError → Error
-Thinking + PermissionRequest → Waiting
-Working + ToolCallEnd → Thinking
-Working + ThinkingEnd → Thinking
-Working + SessionEnd → Idle
-Working + UserCancel → Idle
-Working + ToolCallError → Error
-Working + PermissionRequest → Waiting
-Waiting + PermissionGranted → Thinking
-Waiting + PermissionDenied → Thinking
-Waiting + SessionEnd → Idle
-Waiting + UserCancel → Idle
-Error + SessionEnd → Idle
-Error + UserCancel → Idle
-Error + SessionStart → Thinking
-Error + UserPrompt → Thinking
-AnyState + AdapterDisconnected → Idle
-```
+- **Initial state**: `Connecting`
+- **Transition table**: 31 rules defined in `transitions.rs`
+- **Debouncer**: 500ms minimum state hold time prevents flickering
+- **Callbacks**: `on_state_change()` for custom reactions
+- **Global singleton**: Shared via `lazy_static!` Arc<TokioMutex<PetStateMachine>>
 
 ### Skin/Plugin System
 
-**Skin Discovery (Rust side):**
-```rust
-// src-tauri/src/skin.rs — scan_all_skins()
-1. scan_builtin_png_skins()      // include_dir!("../src/assets/skins")
-2. scan_builtin_resource_skins() // include_dir!("resources/skins") — legacy
-3. scan_directory_skins(user_dir) // ~/.config/agent-pet-hub/skins/
-```
+**Skin System**:
+- Built-in skins: bundled at compile time via `include_dir!`
+- User skins: `~/.config/agent-pet-hub/skins/<skin-id>/`
+- Skin format: `skin.json` + frame PNG files (120×120 recommended)
 
-**Skin Loading (Frontend):**
-```typescript
-// src/hooks/useSkinLoader.ts
-1. invoke("list_skins") → SkinInfo[]
-2. invoke("get_skin_metadata", skinId) → SkinMetadata
-3. Built-in: Vite glob import.meta.glob("*.png") → hash URLs
-4. Custom: Direct file path resolution
-5. Parse frames → { [PetState]: string (URL) }
-```
-
-**Skin Package Structure:**
-```
-skins/
-  {skin-id}/
-    skin.json              // { id, name, version, frames: { idle: "idle.png", ... } }
-    idle.png               // Frame images (120×120 recommended)
-    thinking.png
-    working.png
-    ...
-```
-
-**Falls Back:** `skin.json` supports frame fallbacks for missing states (e.g., shark skin maps `speaking` → `idle.png`).
+**Plugin System**:
+- `Plugin` trait defines interface: `id()`, `name()`, `version()`, `plugin_type()`, `init()`, etc.
+- Plugin types: `skin`, `animation`, `voice`, `notification`
+- Thread-safe: `Send + Sync`
+- Managed by `PluginManager` with load/unload/lifecycle
 
 ### IPC Layer
 
-**Tauri IPC (Frontend ↔ Rust):**
-| Command | Direction | Description |
-|---------|-----------|-------------|
-| `get_pet_state` | Rust → Frontend | Current PetState + timestamp |
-| `get_previous_state` | Rust → Frontend | Previous PetState |
-| `get_settings` | Rust → Frontend | Full config snapshot |
-| `update_settings` | Frontend → Rust | Update skinId, TTS, window settings |
-| `send_event` | Frontend → Rust | Manually trigger event |
-| `set_pet_state` | Frontend → Rust | Force state change (debug) |
-| `toggle_pet_window` | Frontend → Rust | Show/hide pet window |
-| `start_drag` | Frontend → Rust | Begin window drag |
-| `list_skins` | Rust → Frontend | Discover all available skins |
-| `get_skin_metadata` | Rust → Frontend | Get skin.json metadata |
+**Tauri Commands** (frontend → backend):
 
-**WebSocket IPC (External Process ↔ Rust):**
-```
-External Process          WSServer (port 8765)
-    │                          │
-    ├── CONNECT ─────────────▶│
-    ├── AUTH(token) ────────▶ │  Verify token
-    ├── SUBSCRIBE(events) ──▶ │  Register event interest
-    │                          │
-    │◀── EVENT(JSON) ────────┤  Push on event bus
-    │◀── HEARTBEAT ──────────┤  Ping/pong every 30s
-    │                         │
-    ├── DISCONNECT ─────────▶│  Cleanup
-```
+| Command | Parameters | Returns | Purpose |
+|---------|-----------|---------|---------|
+| `get_pet_state` | — | `PetState` | Get current pet state |
+| `get_previous_state` | — | `PetState` | Get previous state |
+| `get_state_snapshot` | — | `serde_json::Value` | Full state snapshot |
+| `get_settings` | — | `serde_json::Value` | Get all settings |
+| `update_settings` | `updates: Value` | `()` | Update settings (deep merge) |
+| `send_event` | `event: UnifiedAgentEvent` | `usize` | Publish event to bus |
+| `set_pet_state` | `state: PetState` | `()` | Force-set state |
+| `toggle_pet_window` | — | `()` | Show/hide pet window |
+| `send_heartbeat` | — | `()` | Publish heartbeat event |
+| `get_agent_info` | — | `AgentIdentity[]` | Get all agent info |
+| `start_drag` | — | `()` | Trigger window drag |
+| `list_skins` | — | `SkinInfo[]` | List all available skins |
+| `get_skin_metadata` | `skinId: string` | `Value` | Get skin metadata |
+
+**Tauri Events** (backend → frontend):
+
+| Event | Payload | Purpose |
+|-------|---------|---------|
+| `pet:state_changed` | `PetState` | Pet state changed |
+| `pet:event` | `UnifiedAgentEvent` (raw stripped) | Agent event received |
+
+**WebSocket Server** (external → app):
+- URL: `ws://127.0.0.1:8765`
+- Auth: Bearer token (configured in settings, default: random ULID)
+- Supports: subscribe, unsubscribe, command, agent_info
 
 ---
 
 ## 📜 Protocol
 
-The protocol is published as `@agent-pub/protocol` (workspace package) for type sharing between Rust and TypeScript.
-
 ### Event Types
 
-```typescript
-type EventType =
-  // Session (3)
-  | "session_start" | "session_end" | "session_compaction"
-  // User (2)
-  | "user_prompt" | "user_cancel"
-  // Thinking (3)
-  | "thinking_start" | "thinking_tick" | "thinking_end"
-  // Tool (4)
-  | "tool_call_start" | "tool_call_end" | "tool_call_error" | "tool_batch"
-  // Permission (3)
-  | "permission_request" | "permission_granted" | "permission_denied"
-  // Message (2)
-  | "agent_message" | "agent_reply"
-  // Subagent (2)
-  | "subagent_start" | "subagent_end"
-  // System (3)
-  | "heartbeat" | "adapter_connected" | "adapter_disconnected"
-  // Total: 22 event types
+The unified event protocol defines **22 event types** across **9 categories**:
+
+| Category | Event Types | Target PetState |
+|----------|-------------|-----------------|
+| **Session** | `session_start`, `session_end`, `session_compaction` | Thinking → Idle → Thinking |
+| **Thinking** | `thinking_start`, `thinking_tick`, `thinking_end` | Thinking |
+| **Tool** | `tool_call_start`, `tool_call_end`, `tool_call_error`, `tool_batch` | Working → Thinking → Error |
+| **Message** | `agent_message`, `agent_reply` | Thinking |
+| **Permission** | `permission_request`, `permission_granted`, `permission_denied` | Waiting → Thinking |
+| **User** | `user_prompt`, `user_cancel` | Thinking → Idle |
+| **Subagent** | `subagent_start`, `subagent_end` | Working → Thinking |
+| **System** | `heartbeat`, `adapter_connected`, `adapter_disconnected` | Idle |
+| **Error** | (embedded in tool_call_error, etc.) | Error |
+
+### Pet States
+
+| State | Animation | Description |
+|-------|-----------|-------------|
+| `idle` | Breathing, idle blinking | Awaiting events |
+| `thinking` | Head tilt, blinking, blush | Processing agent reasoning |
+| `working` | Fast shaking, green ring | Tool execution in progress |
+| `waiting` | Slow rocking, watch-checking | Waiting for user approval |
+| `success` | Celebrating bounce, star | Operation completed |
+| `error` | Head shake, red X | Error occurred |
+| `speaking` | Speaking animation | TTS voice播报 |
+| `connecting` | Rotating spinner | Initializing connection |
+
+### State Machine Transitions
+
+```
+Connecting ──[adapter_connected]──▶ Idle ◀──[session_end / user_cancel]──┐
+     │                                                                     │
+     └──[session_start / user_prompt]──▶ Thinking ──[tool_call_start]──┐  │
+          │                              │                               │  │
+          │                        ┌──────▼──────┐                       │  │
+          │                        │   Working   │◀─────────────────────┘ │
+          │                        └──────┬──────┘                       │ │
+          │                               │                               │ │
+          │                         [tool_call_end]                      │ │
+          │                               ▼                              │ │
+          │                          [thinking_end]                      │ │
+          │                               │                              │ │
+          │                     [permission_request]                     │ │
+          │                               ▼                              │ │
+          │                          [waiting] ──[permission_granted]───▶ │
+          │                               │                                │
+          │                     [session_end / user_cancel]                │
+          │                               ▼                                │
+          └───────────────────────────── Idle ←────────────────────────────┘
+
+Error ──[session_start / user_prompt]──▶ Thinking (recover)
+  │
+  └──[session_end / user_cancel]──▶ Idle
+
+Any State ──[adapter_disconnected]──▶ Idle
 ```
 
-### Event Schema
-
-```typescript
-interface UnifiedAgentEvent {
-  id: string;              // ULID format (26 chars)
-  timestamp: string;       // ISO 8601
-  version: "1.0";
-  source: AgentSource;     // "pi" | "hermes" | "openclaw"
-  category: EventCategory; // "session" | "user" | "thinking" | "tool" | ...
-  type: EventType;         // See above
-  petState: PetState;      // 8 pet states
-  sessionId?: string;
-  toolName?: string;
-  toolArgsPreview?: string;
-  taskPreview?: string;
-  raw: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
-}
-```
-
-### Agent Event Mapping
-
-Each agent's raw events are mapped via `packages/protocol/src/mapping.ts`:
-
-```typescript
-// Pi Agent mapping example
-const piEventMapping: Record<string, UnifiedEventType> = {
-  "session_start": "session_start",
-  "user_prompt": "user_prompt",
-  "text_delta": "thinking_tick",
-  "tool_call": "tool_call_start",
-  "tool_result": "tool_call_end",
-  "tool_error": "tool_call_error",
-  "turn_end": "session_end",
-  "compaction": "session_compaction",
-};
-```
+Full transition table (31 rules) in `src-tauri/src/state_machine/transitions.rs`.
 
 ---
 
 ## ⚙️ Configuration
 
-Config path: `~/.config/agent-pet-hub/config.json`
+### Configuration File Location
+
+| Platform | Path |
+|----------|------|
+| Linux | `~/.config/agent-pet-hub/config.json` |
+| macOS | `~/Library/Application Support/agent-pet-hub/config.json` |
+| Windows | `%APPDATA%\agent-pet-hub\config.json` |
+
+### Configuration Schema
 
 ```json
 {
   "pet": {
-    "skinId": "default",
+    "skinId": "shark",
     "enabled": true,
     "showStatus": true
   },
@@ -598,115 +586,159 @@ Config path: `~/.config/agent-pet-hub/config.json`
     },
     "hermes": {
       "enabled": false,
-      "gatewayUrl": ""
+      "gatewayUrl": "ws://localhost:9100"
     },
     "openclaw": {
       "enabled": false,
-      "url": ""
+      "url": "http://localhost:3100"
     }
   },
   "websocket": {
     "enabled": true,
     "port": 8765,
-    "authToken": "agent-pet-hub-default"
+    "authToken": "01HQXYZ..."
   },
   "tts": {
-    "enabled": false,
-    "volume": 0.8
+    "enabled": true,
+    "volume": 1.0,
+    "language": "zh-cn",
+    "rules": {
+      "session_start": true,
+      "tool_call": true,
+      "tool_error": true,
+      "permission_request": true,
+      "session_end": true,
+      "agent_message": false,
+      "minIntervalMs": 3000,
+      "focusMode": false
+    }
   },
   "window": {
     "width": 320,
     "height": 280,
-    "alwaysOnTop": true,
-    "skipTaskbar": true
+    "alwaysOnTop": true
+  }
+}
+```
+
+### Runtime Configuration Updates
+
+Settings can be updated at runtime via Tauri command or WebSocket:
+
+```typescript
+// Via Tauri invoke
+import { invoke } from "@tauri-apps/api/core";
+await invoke("update_settings", {
+  updates: { tts: { volume: 0.5 } }
+});
+```
+
+### Skin Directory
+
+User skins go to: `~/.config/agent-pet-hub/skins/<skin-id>/skin.json`
+
+Each skin must have:
+```json
+{
+  "id": "my-skin",
+  "name": "My Skin",
+  "description": "A custom skin",
+  "frames": {
+    "idle": "idle.png",
+    "thinking": "thinking.png",
+    "working": "working.png",
+    "waiting": "waiting.png",
+    "success": "success.png",
+    "error": "error.png",
+    "speaking": "speaking.png",
+    "connecting": "connecting.png"
   }
 }
 ```
 
 ---
 
-## 🛠️ Development
+## 🛠 Development
 
-### Adding a New Agent Adapter
+### Development Workflow
 
-1. Create `src-tauri/src/adapter/{name}_adapter.rs`
-2. Implement `AgentAdapter` trait
-3. Add module to `src-tauri/src/adapter/mod.rs`
-4. Register in `lib.rs:42` (init_adapters)
-5. Add config in `config/adapter/{name}.json`
-6. Add mapping in `packages/protocol/src/mapping.ts`
+```bash
+# 1. Start the development server (Vite + Tauri)
+pnpm tauri dev
+
+# This concurrently runs:
+#   - Vite dev server on http://localhost:1420
+#   - Rust Tauri backend connecting to the Vite server
+#   - Hot module replacement for frontend changes
+
+# 2. Build frontend only (for CI or preview)
+pnpm build
+
+# 3. Preview production build
+pnpm preview
+
+# 4. Lint
+pnpm lint
+
+# 5. Run tests
+pnpm test
+```
+
+### Code Structure Notes
+
+- **Frontend**: React 19 + TypeScript strict mode. No Redux — uses Tauri events + React state.
+- **Backend**: Rust with `tokio` async runtime. No `async_trait` in new code (use native async impl).
+- **Protocol**: Shared via `packages/protocol` monorepo workspace. Both Rust and TS side share type definitions.
+- **Styling**: CSS `@keyframes` for all pet animations. No CSS-in-JS.
+- **Window**: Transparent, always-on-top, no decorations, fixed 320×280.
 
 ### Adding a New Skin
 
-1. Create directory `src/assets/skins/{your-skin}/`
-2. Add `skin.json` with frame definitions
-3. Add frame PNG/SVG images (120×120 recommended)
-4. Skin auto-discovers on next restart
+1. Create directory: `src/assets/skins/<name>/`
+2. Add `skin.json` with metadata and frame mappings
+3. Add 8 PNG files (120×120 recommended): `idle.png`, `thinking.png`, `working.png`, `waiting.png`, `success.png`, `error.png`, `speaking.png`, `connecting.png`
+4. Skin auto-detected on next launch — no code changes needed
 
-### Directory Structure Reference
+### Adding a New Agent Adapter
 
-| Directory | Relative Path | Purpose |
-|-----------|--------------|---------|
-| Frontend entry | `src/main.tsx` | React bootstrap |
-| Root component | `src/App.tsx` | Skin loading + window drag |
-| CSS animations | `src/index.css` | 8 state animations + transitions |
-| WS client | `src/services/wsClient.ts` | WebSocket connection management |
-| State hook | `src/hooks/useAgentState.ts` | Tauri event → React state |
-| Skin hook | `src/hooks/useSkinLoader.ts` | Skin discovery + frame resolution |
-| Protocol types | `packages/protocol/src/events.ts` | EventType, PetState, AgentSource |
-| Protocol schemas | `packages/protocol/src/schemas.ts` | Zod validation |
-| Protocol mapping | `packages/protocol/src/mapping.ts` | Agent→Event type maps |
-| Rust lib entry | `src-tauri/src/lib.rs` | App init + module wiring |
-| Rust commands | `src-tauri/src/commands.rs` | Tauri command handlers |
-| State machine | `src-tauri/src/state_machine/` | Rules + debounce logic |
-| Agent adapters | `src-tauri/src/adapter/` | Adapter trait + implementations |
-| Event bus | `src-tauri/src/event_bus/` | Broadcast channel |
-| WS server | `src-tauri/src/ipc/ws_server.rs` | WebSocket server |
-| Skin scanner | `src-tauri/src/skin.rs` | Built-in + user skin discovery |
-| Pi extension | `skills/pi/pet-event-logger.ts` | Pi Agent extension |
+1. Create module under `src-tauri/src/adapter/`
+2. Implement the `AgentAdapter` trait
+3. Register in `lib.rs` setup block
+4. Add config fields to `config/settings.rs`
+5. Re-export in `adapter/mod.rs`
+
+### Windows Development
+
+On Windows, install [Tauri's prerequisites](https://tauri.app/v1/api/start/prerequisites):
+
+```powershell
+winget install --id Rustlang.Rustup
+winget install --id Kitware.CMake
+winget install Microsoft.VisualStudio.2022.BuildTools --override "--wait --add Microsoft.VisualStudio.Workload.VCTools"
+```
 
 ---
 
-## 🆚 Comparison with Similar Projects
+## 🔍 Comparison with Similar Projects
 
-| Feature | **Agent Pet Hub** | macOS Desktop Pet | Linux Desktop Pet (Plasma) | OpenPet |
-|---------|-------------------|-------------------|---------------------------|---------|
-| **AI Agent Integration** | ✅ Native adapter pattern | ❌ Manual trigger | ⚠️ Limited | ❌ |
-| **Multi-Agent Support** | ✅ 3+ agents, extensible | ❌ Single | ⚠️ Single | ⚠️ Limited |
-| **Event Protocol** | ✅ Unified schema (Zod) | ❌ Custom | ❌ Custom | ⚠️ JSON |
-| **Cross-Platform** | ✅ Windows/Mac/Linux (Tauri) | ✅ macOS only | ✅ Linux only | ✅ |
-| **Skin System** | ✅ PNG/SVG + user skins | ⚠️ Images only | ⚠️ Themes | ⚠️ Images |
-| **WebSocket IPC** | ✅ Real-time push | ❌ | ❌ | ❌ |
-| **State Debounce** | ✅ 500ms anti-flicker | ❌ | ⚠️ Basic | ❌ |
-| **TTS** | ✅ Cross-platform | ⚠️ macOS only | ⚠️ Varies | ❌ |
-| **Plugin System** | ✅ Skin/animation/notify | ❌ | ⚠️ Widgets | ❌ |
-| **Build System** | ✅ pnpm workspace | npm | cmake | cargo |
-| **Type Safety** | ✅ TypeScript + Rust | JS | JS/C++ | Rust |
-
-**Agent Pet Hub Advantages:**
-
-1. **Unified Protocol** — Every agent's events normalize to the same schema. Add a new agent in ~100 lines of code without touching the frontend.
-
-2. **Adapter Pattern** — The `AgentAdapter` trait is the single point of extension. The core (state machine, skin rendering, WS server) never changes when adding agents.
-
-3. **State Debounce** — 500ms minimum state retention prevents rapid state flickering during burst events (e.g., rapid tool calls).
-
-4. **Dual IPC** — Tauri Events for frontend communication + WebSocket for external process integration. Most competitors only offer one.
-
-5. **Monorepo Protocol** — `@agent-pet-hub/protocol` package shares types between Rust and TypeScript via workspace packages. Zero duplication, full type safety.
-
-6. **User Skin Directory** — Place skins in `~/.config/agent-pet-hub/skins/` and they auto-discover. No rebuild needed.
+| Feature | Agent Pet Hub | Desktop Pet (generic) | Agent Dashboard |
+|---------|--------------|----------------------|-----------------|
+| Animated pet on desktop | ✅ | ✅ | ❌ |
+| Multi-agent support | ✅ (3 agents) | ❌ | ❌ |
+| Unified event protocol | ✅ | ❌ | ❌ |
+| State machine with debounce | ✅ | ❌ | ❌ |
+| TTS voice broadcast | ✅ | ❌ | ❌ |
+| WebSocket event streaming | ✅ | ❌ | ❌ |
+| Customizable skins | ✅ | ❌ | ❌ |
+| Plugin system | ✅ | ❌ | ❌ |
+| System tray integration | ✅ | ❌ | ❌ |
 
 ---
 
 ## 📄 License
 
-MIT
-
-## 🤝 Contributing
-
-Issues and PRs welcome! Please read the design docs in `docs/` before contributing.
+MIT License — see [LICENSE](./LICENSE) file for details.
 
 ---
 
-*Agent Pet Hub — Your AI Agent deserves a companion 🐾*
+*Built with ❤️ for developers who want their AI agents to have a cute companion on screen.*
