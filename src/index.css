@@ -1,0 +1,588 @@
+/* ============================================
+   Agent-Pet-Hub 全局样式
+   适配透明、无边框的 Tauri 桌面窗口
+   ============================================ */
+
+/* 全局重置 - 透明窗口优化 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 根元素 - 完全填充窗口 */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   宠物容器 - 禁用文本选择（拖拽优化）
+   ============================================ */
+.pet-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+}
+
+/* ============================================
+   状态指示器 - 屏幕底部中央
+   ============================================ */
+.status-indicator {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* ============================================
+   状态切换动画过渡
+   ============================================ */
+.pet-transitioning {
+  animation: pet-transition 0.3s ease;
+}
+
+@keyframes pet-transition {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* ============================================
+   Working 状态 - 脉冲光环
+   ============================================ */
+.working-indicator {
+  animation: pulse-ring 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.7; }
+}
+
+/* ============================================
+   Error 状态 - 闪烁指示
+   ============================================ */
+.error-indicator {
+  animation: error-flash 0.8s ease-in-out;
+}
+
+@keyframes error-flash {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+/* ============================================
+   宠物动画 - 各状态样式
+   ============================================ */
+
+/* 宠物 SVG 基础样式 */
+.pet-puppet {
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+/* ─── Idle 状态 - 呼吸 + 发呆 ─── */
+.pet-puppet.pet-idle {
+  animation: pet-breathe 3s ease-in-out infinite;
+}
+
+@keyframes pet-breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.02) translateY(-1px); }
+}
+
+.pet-idle .blink-animation {
+  animation: blink 4s infinite;
+}
+
+@keyframes blink {
+  0%, 95%, 100% { opacity: 0; transform: scaleY(1); }
+  97% { opacity: 1; transform: scaleY(0.1); }
+}
+
+/* ─── Thinking 状态 - 歪头 + 眨眼 + 腮红 ─── */
+.pet-puppet.pet-thinking {
+  animation: pet-think 2.5s ease-in-out infinite;
+}
+
+@keyframes pet-think {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(5deg) scale(1.01); }
+  50% { transform: rotate(0deg) scale(1); }
+  75% { transform: rotate(-5deg) scale(1.01); }
+}
+
+.pet-thinking .pet-blush {
+  opacity: 0.8;
+  animation: blush-pulse 2s ease-in-out infinite;
+}
+
+@keyframes blush-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+/* ─── Working 状态 - 快速震动 + 绿色光环 ─── */
+.pet-puppet.pet-working {
+  animation: pet-work 0.15s ease-in-out infinite;
+}
+
+@keyframes pet-work {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.pet-working #indicator-working {
+  opacity: 1 !important;
+  animation: ring-spin 4s linear infinite;
+}
+
+@keyframes ring-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Waiting 状态 - 缓慢等待摇摆 ─── */
+.pet-puppet.pet-waiting {
+  animation: pet-wait 4s ease-in-out infinite;
+}
+
+@keyframes pet-wait {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* ─── Success 状态 - 庆祝弹跳 ─── */
+.pet-puppet.pet-success {
+  animation: pet-success-bounce 0.6s ease-out;
+}
+
+@keyframes pet-success-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.15) translateY(-8px); }
+  60% { transform: scale(1.05) translateY(-4px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+.pet-success #indicator-success {
+  opacity: 1 !important;
+  animation: star-twinkle 0.8s ease-in-out infinite;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* ─── Error 状态 - 摇头 + 红色 X ─── */
+.pet-puppet.pet-error {
+  animation: pet-error-shake 0.6s ease-in-out;
+}
+
+@keyframes pet-error-shake {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(-10deg); }
+  30% { transform: rotate(10deg); }
+  45% { transform: rotate(-10deg); }
+  60% { transform: rotate(10deg); }
+  75% { transform: rotate(-5deg); }
+  90% { transform: rotate(5deg); }
+}
+
+.pet-error #indicator-error {
+  opacity: 1 !important;
+  animation: error-flash 0.8s ease-in-out infinite;
+}
+
+@keyframes error-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ─── Speaking 状态 - 说话张合 ─── */
+.pet-puppet.pet-speaking {
+  animation: pet-speak 0.2s ease-in-out infinite;
+}
+
+@keyframes pet-speak {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+
+/* ─── Connecting 状态 - 旋转加载 ─── */
+.pet-puppet.pet-connecting {
+  animation: pet-connect-spin 1.5s linear infinite;
+  filter: brightness(0.7);
+}
+
+@keyframes pet-connect-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   PNG 皮肤渲染样式（替代 SVG）
+   ============================================ */
+
+/* ── 基础样式 ── */
+.pet-png {
+  transition: transform 0.3s ease, filter 0.3s ease;
+  image-rendering: pixelated;
+  pointer-events: none;
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+}
+
+/* ─── Idle 状态 - 呼吸 + 发呆 ─── */
+.pet-png.pet-idle {
+  animation: pet-breathe 3s ease-in-out infinite;
+}
+
+@keyframes pet-breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.02) translateY(-1px); }
+}
+
+/* ─── Thinking 状态 - 歪头 + 眨眼 + 腮红 ─── */
+.pet-png.pet-thinking {
+  animation: pet-think 2.5s ease-in-out infinite;
+}
+
+@keyframes pet-think {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(5deg) scale(1.01); }
+  50% { transform: rotate(0deg) scale(1); }
+  75% { transform: rotate(-5deg) scale(1.01); }
+}
+
+/* ─── Working 状态 - 快速震动 ─── */
+.pet-png.pet-working {
+  animation: pet-work 0.15s ease-in-out infinite;
+}
+
+@keyframes pet-work {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* ─── Waiting 状态 - 缓慢等待摇摆 ─── */
+.pet-png.pet-waiting {
+  animation: pet-wait 4s ease-in-out infinite;
+}
+
+@keyframes pet-wait {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* ─── Success 状态 - 庆祝弹跳 ─── */
+.pet-png.pet-success {
+  animation: pet-success-bounce 0.6s ease-out;
+}
+
+@keyframes pet-success-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.15) translateY(-8px); }
+  60% { transform: scale(1.05) translateY(-4px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+/* ─── Error 状态 - 摇头 ─── */
+.pet-png.pet-error {
+  animation: pet-error-shake 0.6s ease-in-out;
+}
+
+@keyframes pet-error-shake {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(-10deg); }
+  30% { transform: rotate(10deg); }
+  45% { transform: rotate(-10deg); }
+  60% { transform: rotate(10deg); }
+  75% { transform: rotate(-5deg); }
+  90% { transform: rotate(5deg); }
+}
+
+/* ─── Speaking 状态 - 说话张合 ─── */
+.pet-png.pet-speaking {
+  animation: pet-speak 0.2s ease-in-out infinite;
+}
+
+@keyframes pet-speak {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+
+/* ─── Connecting 状态 - 旋转加载 ─── */
+.pet-png.pet-connecting {
+  animation: pet-connect-spin 1.5s linear infinite;
+  filter: brightness(0.7);
+}
+
+@keyframes pet-connect-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── 状态指示器 overlay ─── */
+
+/* 基础指示器容器 */
+.indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Working 状态 - 绿色旋转光环 */
+.indicator-working {
+  width: 100px;
+  height: 100px;
+  border: 2px solid #4CAF50;
+  border-radius: 50%;
+  border-style: dashed;
+  animation: ring-spin 4s linear infinite;
+}
+
+@keyframes ring-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Error 状态 - 红色 X 标记 */
+.indicator-error {
+  width: 36px;
+  height: 36px;
+  animation: error-flash 0.8s ease-in-out infinite;
+}
+
+.indicator-error::before,
+.indicator-error::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 3px;
+  background: #F44336;
+  border-radius: 2px;
+}
+
+.indicator-error::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.indicator-error::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+@keyframes error-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Success 状态 - 金色星星 */
+.indicator-success {
+  width: 36px;
+  height: 36px;
+  animation: star-twinkle 0.8s ease-in-out infinite;
+  font-size: 24px;
+  color: #FFD700;
+  text-align: center;
+  line-height: 36px;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* ============================================
+   拖拽支持
+   ============================================ */
+
+/* PNG 皮肤拖拽 */
+.pet-png-wrapper {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pet-png-wrapper:active {
+  cursor: grabbing;
+}
+
+/* SVG 皮肤拖拽（兼容旧版） */
+.pet-svg-wrapper {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pet-svg-wrapper:active {
+  cursor: grabbing;
+}
+
+/* ============================================
+   皮肤选择器样式
+   ============================================ */
+
+.skin-selector {
+  padding: 8px;
+  max-width: 320px;
+}
+
+.skin-selector h3 {
+  font-size: 12px;
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+}
+
+.skin-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 10px;
+}
+
+.skin-option:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 105, 180, 0.4);
+  transform: translateY(-1px);
+}
+
+.skin-option.active {
+  background: rgba(255, 105, 180, 0.15);
+  border-color: #FF69B4;
+  color: #fff;
+}
+
+.skin-preview {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.skin-preview-icon {
+  font-size: 20px;
+}
+
+.skin-name {
+  font-size: 9px;
+  text-align: center;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skin-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 7px;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.skin-badge-custom {
+  background: rgba(100, 200, 255, 0.3);
+  color: #88ccff;
+}
+
+.skin-badge-active {
+  background: rgba(255, 105, 180, 0.4);
+  color: #ffb6c1;
+}
+
+.skin-option {
+  position: relative;
+}
+
+.skin-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+}
+
+.skin-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 105, 180, 0.2);
+  border-top-color: #FF69B4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.skin-error {
+  color: #F44336;
+  font-size: 11px;
+  text-align: center;
+  padding: 10px;
+}
+
+/* 加载/错误状态 */
+.pet-loading {
+  width: 24px;
+  height: 24px;
+  margin: 48px auto;
+  border: 3px solid rgba(255, 105, 180, 0.3);
+  border-top-color: #FF69B4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.pet-error-fallback {
+  padding: 8px 12px;
+  color: #F44336;
+  font-size: 11px;
+  text-align: center;
+}

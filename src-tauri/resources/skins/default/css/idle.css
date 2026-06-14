@@ -1,0 +1,64 @@
+/*
+ * Agent-Pet-Hub 默认皮肤 - 空闲状态动画
+ *
+ * 动画定义（参考 phase4-mvp.md）：
+ *   呼吸动画：轻微缩放，3秒循环
+ *
+ *   Keyframes:
+ *     0.0  → scale(1.0)
+ *     0.5  → scale(1.02)
+ *     1.0  → scale(1.0)
+ */
+
+.pet-idle {
+  /* 呼吸动画 - 非常轻微的缩放，模拟生命感 */
+  animation: pet-breathe 3s ease-in-out infinite;
+}
+
+.pet-idle .pet-body {
+  /* 身体跟随呼吸轻微偏移 */
+  animation: pet-body-breathe 3s ease-in-out infinite;
+}
+
+.pet-idle .blink-animation {
+  /* 空闲状态触发眨眼 */
+  begin: 0s;
+}
+
+.pet-idle .pet-blush {
+  /* 腮红在空闲时保持淡色 */
+  opacity: 0.6;
+  transition: opacity 0.5s ease;
+}
+
+/* 呼吸缩放动画 */
+@keyframes pet-breathe {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 身体独立呼吸微动画 */
+@keyframes pet-body-breathe {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(0.5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* 状态指示器隐藏 */
+.pet-idle .indicator {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}

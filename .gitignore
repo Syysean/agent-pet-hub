@@ -1,0 +1,23 @@
+# 构建产物
+dist/
+
+# 依赖
+node_modules/
+
+# Rust 编译产物
+src-tauri/target/
+src-tauri/gen/
+
+# 编辑器
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 用户配置（含个人路径）
+*.local.json

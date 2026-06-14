@@ -1,0 +1,21 @@
+{
+  "id": "shark",
+  "name": "Shark",
+  "author": "Sean",
+  "version": "1.0",
+  "description": "A cute shark pet character",
+  "frame_count": {
+    "width": 120,
+    "height": 120
+  },
+  "frames": {
+    "idle": "idle.png",
+    "thinking": "thinking.png",
+    "working": "working.png",
+    "waiting": "waiting.png",
+    "success": "success.png",
+    "error": "error.png",
+    "speaking": "speaking.png",
+    "connecting": "connecting.png"
+  }
+}

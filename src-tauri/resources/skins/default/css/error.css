@@ -1,0 +1,112 @@
+/*
+ * Agent-Pet-Hub 默认皮肤 - 错误状态动画
+ *
+ * 动画定义（参考 phase4-mvp.md）：
+ *   摇头 + 变红
+ *
+ *   Keyframes:
+ *     0.0   → rotate(-8.0)
+ *     0.25  → rotate(8.0)
+ *     0.5   → rotate(-8.0)
+ *     0.75  → rotate(8.0)
+ *     1.0   → rotate(0.0)
+ *
+ *   周期: 800ms, 循环
+ */
+
+.pet-error {
+  /* 摇头动画 - 幅度比思考更大 */
+  animation: pet-error-shake 800ms ease-in-out infinite;
+  transform-origin: 60px 80px;
+}
+
+.pet-error .pet-head {
+  /* 错误时头部变红 */
+  animation: pet-error-color-shift 800ms ease-in-out infinite;
+  transform-origin: 60px 42px;
+}
+
+.pet-error .pet-mouth {
+  /* 错误时嘴巴变为难过表情 */
+  d: path("M 50 53 Q 60 46 70 53");
+  stroke-width: 2.5;
+  transition: d 0.3s ease;
+}
+
+/* 摇头动画 */
+@keyframes pet-error-shake {
+  0% {
+    transform: rotate(-8deg);
+  }
+  25% {
+    transform: rotate(8deg);
+  }
+  50% {
+    transform: rotate(-8deg);
+  }
+  75% {
+    transform: rotate(8deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* 头部颜色变化动画 */
+@keyframes pet-error-color-shift {
+  0% {
+    fill: #FFCDD2;
+  }
+  25% {
+    fill: #EF9A9A;
+  }
+  50% {
+    fill: #FFCDD2;
+  }
+  75% {
+    fill: #EF9A9A;
+  }
+  100% {
+    fill: #FFCDD2;
+  }
+}
+
+/* 错误时眼睛变小，显得担忧 */
+.pet-error .pet-eyes ellipse {
+  animation: pet-error-eyes 800ms ease-in-out infinite;
+}
+
+@keyframes pet-error-eyes {
+  0% {
+    rx: 4;
+    ry: 5;
+  }
+  25% {
+    rx: 3.5;
+    ry: 4.5;
+  }
+  50% {
+    rx: 4;
+    ry: 5;
+  }
+  75% {
+    rx: 3.5;
+    ry: 4.5;
+  }
+  100% {
+    rx: 4;
+    ry: 5;
+  }
+}
+
+/* 显示红色指示器 */
+.pet-error #indicator-error {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* 其他指示器隐藏 */
+.pet-error .indicator {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}

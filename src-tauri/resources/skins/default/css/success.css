@@ -1,0 +1,75 @@
+/*
+ * Agent-Pet-Hub 默认皮肤 - 成功状态动画
+ *
+ * 动画定义（参考 phase4-mvp.md）：
+ *   庆祝：弹跳 + 缩放
+ *
+ *   Keyframes:
+ *     0.0   → scale(1.0)
+ *     0.2   → scale(1.2) translate(0, -10)
+ *     0.4   → scale(1.0)
+ *     0.6   → scale(1.2) translate(0, -10)
+ *     1.0   → scale(1.0)
+ *
+ *   周期: 1s, 只播放一次
+ */
+
+.pet-success {
+  /* 庆祝弹跳动画 - 只播放一次 */
+  animation: pet-success-bounce 1s ease-out forwards;
+  transform-origin: 60px 100px;
+}
+
+.pet-success #indicator-success {
+  opacity: 1;
+  animation: pet-success-star-pop 0.5s ease-out forwards;
+  transform-origin: 60px 8px;
+}
+
+/* 庆祝弹跳动画 */
+@keyframes pet-success-bounce {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  20% {
+    transform: scale(1.15) translateY(-8px);
+  }
+  40% {
+    transform: scale(1) translateY(0);
+  }
+  60% {
+    transform: scale(1.15) translateY(-8px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 星星弹出动画 */
+@keyframes pet-success-star-pop {
+  0% {
+    transform: scale(0) rotate(-30deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* 成功时嘴巴变为大笑 */
+.pet-success .pet-mouth {
+  d: path("M 48 48 Q 60 58 72 48");
+  stroke-width: 2.5;
+  transition: d 0.3s ease;
+}
+
+/* 其他指示器隐藏 */
+.pet-success .indicator {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}

@@ -1,0 +1,55 @@
+/*
+ * Agent-Pet-Hub 默认皮肤 - 等待状态动画
+ *
+ * 动画定义（参考 phase4-mvp.md）：
+ *   缓慢摆动
+ *
+ *   Keyframes:
+ *     0.0   → rotate(-3.0)
+ *     0.5   → rotate(0.0)
+ *     1.0   → rotate(3.0)
+ *
+ *   周期: 4s, 循环
+ */
+
+.pet-waiting {
+  /* 缓慢摆动 - 模拟耐心等待的样子 */
+  animation: pet-waiting-sway 4s ease-in-out infinite;
+  transform-origin: 60px 80px;
+}
+
+/* 缓慢摆动动画 */
+@keyframes pet-waiting-sway {
+  0% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(-3deg);
+  }
+}
+
+/* 等待时眼睛微微下垂，增加慵懒感 */
+.pet-waiting .pet-eyes ellipse {
+  animation: pet-waiting-eyes 4s ease-in-out infinite;
+}
+
+@keyframes pet-waiting-eyes {
+  0% {
+    ry: 5;
+  }
+  50% {
+    ry: 3;
+  }
+  100% {
+    ry: 5;
+  }
+}
+
+/* 等待状态指示器隐藏 */
+.pet-waiting .indicator {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}

@@ -1,0 +1,79 @@
+/*
+ * Agent-Pet-Hub 默认皮肤 - 工作中状态动画
+ *
+ * 动画定义（参考 phase4-mvp.md）：
+ *   快速震动（敲代码效果）
+ *
+ *   Keyframes:
+ *     0.0   → translate(0, 0)
+ *     0.1   → translate(-1, 0)
+ *     0.2   → translate(1, 0)
+ *     0.3   → translate(-1, 0)
+ *     0.4   → translate(0, 0)
+ *
+ *   周期: 200ms, 循环
+ */
+
+.pet-working {
+  /* 快速震动 - 模拟敲代码的动感 */
+  animation: pet-working-shake 200ms linear infinite;
+  transform-origin: 60px 80px;
+}
+
+.pet-working .pet-head {
+  /* 头部独立微震动，增加真实感 */
+  animation: pet-head-twitch 150ms ease-in-out infinite;
+  transform-origin: 60px 42px;
+}
+
+/* 整体震动动画 */
+@keyframes pet-working-shake {
+  0% {
+    transform: translate(0px, 0px);
+  }
+  10% {
+    transform: translate(-1px, 0px);
+  }
+  20% {
+    transform: translate(1px, 0px);
+  }
+  30% {
+    transform: translate(-1px, 0px);
+  }
+  40% {
+    transform: translate(0px, 0px);
+  }
+  100% {
+    transform: translate(0px, 0px);
+  }
+}
+
+/* 头部独立微震动 */
+@keyframes pet-head-twitch {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(2deg);
+  }
+  50% {
+    transform: rotate(-1deg);
+  }
+  75% {
+    transform: rotate(1deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* 工作中显示绿色指示器 */
+.pet-working #indicator-working {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.pet-working .indicator {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}

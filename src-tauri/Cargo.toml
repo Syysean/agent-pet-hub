@@ -1,0 +1,82 @@
+[package]
+name = "agent-pet-hub"
+version = "0.1.0"
+description = "Agent Pet Hub - A Tauri desktop app for AI agent interaction with animated pet"
+edition = "2021"
+
+[lib]
+# The name of the native library.
+name = "agent_pet_hub_lib"
+# "cdylib" is necessary for Tauri.
+crate-type = ["cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Tauri
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-store = "2"
+
+# Serde for serialization/deserialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+thiserror = "2"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Config paths
+dirs = "5"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Tracing for logging
+tracing = "0.1"
+
+# JSON Schema generation
+schemars = "0.8"
+
+# WebSocket server for external IPC
+tokio-tungstenite = "0.26"
+
+# Future combinator traits (for SinkExt/StreamExt used by WebSocket)
+futures-util = "0.3"
+
+# File watching (cross-platform)
+notify = "8"
+
+# ULID
+ulid = "1"
+
+# In-memory lock
+parking_lot = "0.12"
+
+# Global singleton registration
+lazy_static = "1"
+
+# Embed directories at compile time (for builtin skin resources)
+include_dir = "0.7"
+
+# HTTP client (for OpenClaw/Hermes)
+reqwest = { version = "0.12", features = ["json"] }
+
+# Async trait support
+async-trait = "0.1"
+tracing-subscriber = "0.3.23"
+
+# Test dependencies (dev-only)
+[dev-dependencies]
+futures-executor = "0.3"
+
+# TTS (platform-specific)
+# macOS: "say" command
+# Linux: "espeak" command
+# Windows: Edge-TTS via HTTP API

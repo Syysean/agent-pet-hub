@@ -1,0 +1,58 @@
+/*
+ * Agent-Pet-Hub 默认皮肤 - 思考状态动画
+ *
+ * 动画定义（参考 phase4-mvp.md）：
+ *   歪头 + 眨眼
+ *
+ *   Keyframes:
+ *     0.0   → rotate(0.0)
+ *     0.3   → rotate(5.0)
+ *     0.6   → rotate(0.0)
+ *     0.8   → rotate(-5.0)
+ *     1.0   → rotate(0.0)
+ *
+ *   周期: 2s, 循环
+ */
+
+.pet-thinking {
+  /* 歪头动画 - 模拟思考时的小动作 */
+  animation: pet-thinking-tilt 2s ease-in-out infinite;
+  transform-origin: 60px 80px;
+}
+
+.pet-thinking .blink-animation {
+  /* 思考时眨眼更频繁 */
+  begin: 0s;
+  animation-duration: 2.5s;
+}
+
+.pet-thinking .pet-blush {
+  /* 思考时腮红增强 */
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+/* 歪头动画 - 左右轻微摇摆 */
+@keyframes pet-thinking-tilt {
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(5deg);
+  }
+  60% {
+    transform: rotate(0deg);
+  }
+  80% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* 状态指示器隐藏 */
+.pet-thinking .indicator {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}

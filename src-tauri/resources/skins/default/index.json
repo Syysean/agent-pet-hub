@@ -1,0 +1,9 @@
+{
+  "id": "default",
+  "name": "Default Skin",
+  "description": "The default pet skin — a cute round character",
+  "version": "1.0.0",
+  "author": "Agent Pet Hub",
+  "image_path": "pet.svg",
+  "custom": false
+}
