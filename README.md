@@ -310,7 +310,7 @@ agent-pet-hub/                          # Monorepo root
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/agent-pet-hub.git
+git clone https://github.com/Syysean/agent-pet-hub.git
 cd agent-pet-hub
 
 # 2. Install Node.js dependencies
